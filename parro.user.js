@@ -7,6 +7,8 @@
 // @match        https://*.parro.com/*
 // @run-at       document-start
 // @grant        unsafeWindow
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @connect      translate.googleapis.com
 // @updateURL    https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js
@@ -18,12 +20,19 @@
 
   const DEBUG = true;
 
-  // Change target language here if needed:
-  // English: 'en'
-  // Russian: 'ru'
-  // Ukrainian: 'uk'
   const SOURCE_LANG = 'nl';
-  const TARGET_LANG = 'en';
+  const DEFAULT_TARGET_LANG = 'en';
+  const TARGET_LANG_STORAGE_KEY = 'parroTargetLanguage';
+  const TARGET_LANG_OPTIONS = [
+    ['en', 'English'],
+    ['ru', 'Russian'],
+    ['uk', 'Ukrainian'],
+    ['nl', 'Dutch'],
+    ['de', 'German'],
+    ['fr', 'French'],
+    ['es', 'Spanish'],
+    ['pl', 'Polish']
+  ];
 
   const pageWindow = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
   const translationCache = new Map();
@@ -34,6 +43,22 @@
 
   function warn(...args) {
     console.warn('[Parro reader]', ...args);
+  }
+
+  function getTargetLang() {
+    const storedLang = GM_getValue(TARGET_LANG_STORAGE_KEY, DEFAULT_TARGET_LANG);
+    const knownLang = TARGET_LANG_OPTIONS.some(([code]) => code === storedLang);
+
+    return knownLang ? storedLang : DEFAULT_TARGET_LANG;
+  }
+
+  function getTargetLangLabel(lang = getTargetLang()) {
+    return TARGET_LANG_OPTIONS.find(([code]) => code === lang)?.[1] || lang;
+  }
+
+  function setTargetLang(lang) {
+    GM_setValue(TARGET_LANG_STORAGE_KEY, lang);
+    translationCache.clear();
   }
 
   function isAnnouncementEventUrl(url) {
@@ -147,12 +172,13 @@
 
   function openGoogleTranslate(text) {
     const limitedText = String(text || '').slice(0, 4500);
+    const targetLang = getTargetLang();
 
     const translateUrl =
       'https://translate.google.com/?sl=' +
       encodeURIComponent(SOURCE_LANG) +
       '&tl=' +
-      encodeURIComponent(TARGET_LANG) +
+      encodeURIComponent(targetLang) +
       '&op=translate&text=' +
       encodeURIComponent(limitedText);
 
@@ -184,7 +210,8 @@
   }
 
   function translateChunk(text) {
-    const cacheKey = `${SOURCE_LANG}:${TARGET_LANG}:${text}`;
+    const targetLang = getTargetLang();
+    const cacheKey = `${SOURCE_LANG}:${targetLang}:${text}`;
 
     if (translationCache.has(cacheKey)) {
       return Promise.resolve(translationCache.get(cacheKey));
@@ -193,7 +220,7 @@
     const url =
       'https://translate.googleapis.com/translate_a/single?client=gtx' +
       '&sl=' + encodeURIComponent(SOURCE_LANG) +
-      '&tl=' + encodeURIComponent(TARGET_LANG) +
+      '&tl=' + encodeURIComponent(targetLang) +
       '&dt=t&q=' + encodeURIComponent(text);
 
     return new Promise((resolve, reject) => {
@@ -370,12 +397,42 @@
 
     toolbar.append(copyAll, openAllExternal, hideRead);
 
+    const settings = document.createElement('label');
+    settings.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #555;
+      font-size: 12px;
+      margin-top: 8px;
+    `;
+
+    const targetLangSelect = document.createElement('select');
+    targetLangSelect.setAttribute('aria-label', 'Translation language');
+    targetLangSelect.style.cssText = 'font-size:12px;';
+
+    for (const [code, label] of TARGET_LANG_OPTIONS) {
+      const option = document.createElement('option');
+      option.value = code;
+      option.textContent = `${label} (${code.toUpperCase()})`;
+      targetLangSelect.append(option);
+    }
+
+    targetLangSelect.value = getTargetLang();
+    targetLangSelect.onchange = () => {
+      setTargetLang(targetLangSelect.value);
+      document.getElementById('parro-readable-panel')?.remove();
+      renderPanel(items, sourceUrl);
+    };
+
+    settings.append('Translate to', targetLangSelect);
+
     const hint = document.createElement('div');
     hint.textContent =
-      `Use “Translate here” to show ${TARGET_LANG.toUpperCase()} text below the Dutch original.`;
+      `Use “Translate here” to show ${getTargetLangLabel()} text below the Dutch original.`;
     hint.style.cssText = 'color:#555; font-size:12px; margin-top:6px;';
 
-    header.append(titleRow, toolbar, hint);
+    header.append(titleRow, toolbar, settings, hint);
     panel.append(header);
 
     for (const item of items) {
@@ -446,7 +503,7 @@
 
       const translationBox = document.createElement('div');
       translationBox.hidden = true;
-      translationBox.setAttribute('lang', TARGET_LANG);
+      translationBox.setAttribute('lang', getTargetLang());
       translationBox.setAttribute('translate', 'no');
       translationBox.style.cssText = `
         margin-top: 10px;
@@ -457,7 +514,8 @@
       `;
 
       const translationHeading = document.createElement('strong');
-      translationHeading.textContent = `Translation (${TARGET_LANG.toUpperCase()})`;
+      translationHeading.textContent =
+        `Translation (${getTargetLangLabel()} / ${getTargetLang().toUpperCase()})`;
       translationHeading.style.cssText = 'display:block; margin-bottom:6px;';
 
       const translatedTitle = document.createElement('div');
@@ -473,12 +531,16 @@
       );
 
       let translationPromise = null;
+      let translationPromiseLang = null;
       const originalTitle = item.title;
       const originalContents = item.contents;
       let isReplaced = false;
 
       async function getTranslation() {
-        if (!translationPromise) {
+        const targetLang = getTargetLang();
+
+        if (!translationPromise || translationPromiseLang !== targetLang) {
+          translationPromiseLang = targetLang;
           translationPromise = translateItem(item);
         }
 
