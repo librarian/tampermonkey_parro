@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Make parro.com news translatable and copyable
 // @namespace    local.parro.translation
-// @version      0.8
+// @version      0.9
 // @description  Shows Parro announcements as normal HTML and translates each item inline.
 // @match        https://talk.parro.com/*
 // @match        https://*.parro.com/*
