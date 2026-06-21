@@ -4,11 +4,43 @@ Parro uses Flutter Web, which renders text in a way that can break built-in brow
 
 This userscript extracts Parro news content into normal HTML and adds inline translation, making news readable in different language without relying on the browser's page translation.
 
-Install the latest released userscript from:
-
-https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js
+Install the latest released userscript from [parro.user.js](https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js).
 
 Tampermonkey will use the script metadata `@updateURL` and `@downloadURL` to check for updates from the latest GitHub release asset.
+
+## Installation
+
+1. Install the Tampermonkey browser extension:
+   - Chrome/Chromium/Edge: https://www.tampermonkey.net/?browser=chrome
+   - Firefox: https://www.tampermonkey.net/?browser=firefox
+   - Safari: https://www.tampermonkey.net/?browser=safari
+2. Open the userscript install URL: [parro.user.js](https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js).
+
+3. Tampermonkey should open an installation screen. Click **Install**.
+4. Open Parro in the browser:
+
+```text
+https://talk.parro.com/
+```
+
+5. Open the talk.parro.com, and click on news channel it will open floating windows with the same news and you can selectively translate them.
+
+## Usage
+
+The overlay appears on top of Parro and contains the captured announcements as normal selectable HTML text.
+
+Available controls:
+
+1. **Translate to**: selects the target language. The choice is saved by Tampermonkey and reused next time.
+2. **Translate here**: adds a translation below the original announcement.
+3. **Replace with translation** / **Show original**: switches one announcement between translated text and the original text.
+4. **Open in Google Translate**: opens the selected announcement in Google Translate.
+5. **Copy this**: copies one announcement as plain text.
+6. **Copy all**: copies all captured announcements as plain text.
+7. **Hide read**: hides announcements that Parro marks as read.
+8. **Close**: hides the overlay until announcements are opened again.
+
+If the overlay does not appear, refresh Parro and reopen the announcements page. Tampermonkey also needs to be enabled for `talk.parro.com` and `*.parro.com`.
 
 ## Example
 
