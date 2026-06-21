@@ -14,11 +14,14 @@ Tampermonkey will use the script metadata `@updateURL` and `@downloadURL` to che
    - Chrome/Chromium/Edge: https://www.tampermonkey.net/?browser=chrome
    - Firefox: https://www.tampermonkey.net/?browser=firefox
    - Safari: https://www.tampermonkey.net/?browser=safari
-2. Open the userscript install URL: [parro.user.js](https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js).
-
-3. Tampermonkey should open an installation screen. Click **Install**.
-4. Open [Parro](https://talk.parro.com/) in the browser
-5. Click on any news channel and it will open floating window with the same news and you can selectively translate each one.
+2. In Chrome or Edge, enable Tampermonkey's user scripts permission:
+   - Chrome: open [Tampermonkey extension settings](chrome://extensions/?id=dhdgffkkebhmkfjojejmpbldmpobfkfo) and enable **Allow User Scripts**.
+   - Edge: open [Tampermonkey extension settings](edge://extensions/?id=iikmkjmpaadaobahmlepeloendndfphd) and enable **Allow User Scripts**.
+   - See Tampermonkey FAQ [Q209: Permission to execute userscripts](https://www.tampermonkey.net/faq.php?locale=en&q=Q209).
+3. Open the userscript install URL: [parro.user.js](https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js).
+4. Tampermonkey should open an installation screen. Click **Install**.
+5. Open [Parro](https://talk.parro.com/) in the browser.
+6. Click on any news channel and it will open floating window with the same news and you can selectively translate each one.
 
 ## Usage
 
