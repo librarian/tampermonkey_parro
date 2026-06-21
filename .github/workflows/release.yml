@@ -1,0 +1,94 @@
+name: Release userscript
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Bump minor version and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump userscript minor version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          script="parro.user.js"
+          current_version="$(sed -n 's|^// @version[[:space:]]*||p' "$script" | head -n 1)"
+
+          if [[ ! "$current_version" =~ ^[0-9]+[.][0-9]+([.][0-9]+)?$ ]]; then
+            echo "::error::Unsupported @version format: $current_version"
+            exit 1
+          fi
+
+          IFS='.' read -r major minor patch <<< "$current_version"
+          next_minor=$((minor + 1))
+
+          if [[ -n "${patch:-}" ]]; then
+            next_version="${major}.${next_minor}.0"
+          else
+            next_version="${major}.${next_minor}"
+          fi
+
+          tag="v${next_version}"
+
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "::error::Tag $tag already exists"
+            exit 1
+          fi
+
+          sed -i "s|^// @version[[:space:]]*.*|// @version      ${next_version}|" "$script"
+
+          update_url="$(sed -n 's|^// @updateURL[[:space:]]*||p' "$script" | head -n 1)"
+          download_url="$(sed -n 's|^// @downloadURL[[:space:]]*||p' "$script" | head -n 1)"
+          expected_url="https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js"
+
+          if [[ "$update_url" != "$expected_url" ]]; then
+            echo "::error::Unexpected @updateURL: $update_url"
+            exit 1
+          fi
+
+          if [[ "$download_url" != "$expected_url" ]]; then
+            echo "::error::Unexpected @downloadURL: $download_url"
+            exit 1
+          fi
+
+          echo "current_version=$current_version" >> "$GITHUB_OUTPUT"
+          echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Commit version bump
+        run: |
+          git add parro.user.js
+          git commit -m "Release v${{ steps.version.outputs.next_version }}"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" parro.user.js \
+            --verify-tag \
+            --latest \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes "Tampermonkey release ${{ steps.version.outputs.tag }}"
