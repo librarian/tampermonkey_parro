@@ -17,13 +17,8 @@ Tampermonkey will use the script metadata `@updateURL` and `@downloadURL` to che
 2. Open the userscript install URL: [parro.user.js](https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.user.js).
 
 3. Tampermonkey should open an installation screen. Click **Install**.
-4. Open Parro in the browser:
-
-```text
-https://talk.parro.com/
-```
-
-5. Open the talk.parro.com, and click on news channel it will open floating windows with the same news and you can selectively translate them.
+4. Open [Parro](https://talk.parro.com/) in the browser
+5. Click on any news channel and it will open floating window with the same news and you can selectively translate each one.
 
 ## Usage
 
