@@ -10,6 +10,12 @@ https://github.com/librarian/tampermonkey_parro/releases/latest/download/parro.u
 
 Tampermonkey will use the script metadata `@updateURL` and `@downloadURL` to check for updates from the latest GitHub release asset.
 
+## Example
+
+The userscript shows a normal HTML overlay with copy and translation controls. This anonymized screenshot has all message text and photos blurred.
+
+![Anonymized Parro userscript example](docs/example.png)
+
 ## Release
 
 Run the **Release userscript** workflow from the GitHub Actions tab.
